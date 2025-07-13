@@ -1,16 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { PromptForm } from "./components/PromptForm"
-import { UIBlockPreview } from "./components/UIBlockPreview"
-import { Sidebar } from "./components/Sidebar"
-import { AIActionToolbar } from "./components/AIActionToolbar"
-import { EditorWorkspace } from "./components/EditorWorkspace"
-import { ThemeSwitcher } from "./components/ThemeSwitcher"
+import { BuilderLayout } from "./components/ai-ui-builder/BuilderLayout"
+import { AIToolsPanel } from "./components/ai-ui-builder/AIToolsPanel"
+import { ComponentLibrary } from "./components/ai-ui-builder/ComponentLibrary"
+import { DragDropWorkspace } from "./components/ai-ui-builder/DragDropWorkspace"
+import { PreviewPanel } from "./components/ai-ui-builder/PreviewPanel"
+import { DeployPanel } from "./components/ai-ui-builder/DeployPanel"
+import { OnboardingBanner } from "./components/ai-ui-builder/OnboardingBanner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Sparkles, 
   Code, 
@@ -20,67 +21,67 @@ import {
   Share2,
   Save,
   History,
-  Zap
+  Zap,
+  Brain,
+  Eye,
+  Rocket,
+  Package,
+  Grid3X3
 } from "lucide-react"
 
-interface ComponentBlock {
+interface AIMessage {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  timestamp: Date
+  model: string
+  action?: string
+}
+
+interface WorkspaceElement {
+  id: string
+  type: string
+  name: string
+  props: Record<string, any>
+  position: { x: number; y: number }
+  size: { width: number; height: number }
+}
+
+interface Component {
   id: string
   name: string
-  jsx: string
-  metadata: {
-    framework: string
-    styling: string
-    complexity: string
-  }
-  position: number
+  description: string
+  category: string
+  tags: string[]
+  isFavorite: boolean
+  isPublic: boolean
+  createdAt: Date
+  updatedAt: Date
+  downloads: number
+  rating: number
+  author: string
 }
 
 export default function Home() {
-  const [currentComponent, setCurrentComponent] = useState<any>(null)
-  const [blocks, setBlocks] = useState<ComponentBlock[]>([])
+  const [activeTab, setActiveTab] = useState("workspace")
+  const [workspaceElements, setWorkspaceElements] = useState<WorkspaceElement[]>([])
+  const [aiMessages, setAiMessages] = useState<AIMessage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isPerformingAction, setIsPerformingAction] = useState(false)
-  const [activeTab, setActiveTab] = useState("builder")
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system")
+  const [showOnboarding, setShowOnboarding] = useState(true)
 
-  const handleGenerateUI = async (prompt: string, model: string) => {
+  const handleAIAction = async (action: string, prompt: string, model: string) => {
     setIsGenerating(true)
-    try {
-      const response = await fetch("/api/generate-ui", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt, model }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to generate UI")
-      }
-
-      const data = await response.json()
-      setCurrentComponent(data)
-      
-      // Add to blocks
-      const newBlock: ComponentBlock = {
-        id: `block-${Date.now()}`,
-        name: data.metadata.name,
-        jsx: data.jsx,
-        metadata: data.metadata,
-        position: blocks.length,
-      }
-      setBlocks([...blocks, newBlock])
-      
-    } catch (error) {
-      console.error("Error generating UI:", error)
-      alert("Failed to generate UI component")
-    } finally {
-      setIsGenerating(false)
+    
+    // Add user message
+    const userMessage: AIMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: prompt,
+      timestamp: new Date(),
+      model
     }
-  }
+    setAiMessages(prev => [...prev, userMessage])
 
-  const handleAIAction = async (action: any, code: string) => {
-    setIsPerformingAction(true)
     try {
       const response = await fetch("/api/ai-action", {
         method: "POST",
@@ -88,9 +89,9 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: action.id,
-          code,
-          model: action.model,
+          action,
+          code: "", // Current workspace code
+          model,
         }),
       })
 
@@ -100,276 +101,156 @@ export default function Home() {
 
       const data = await response.json()
       
-      // Update current component with improved code
-      if (currentComponent) {
-        setCurrentComponent({
-          ...currentComponent,
-          jsx: data.result,
-        })
+      // Add AI response
+      const aiMessage: AIMessage = {
+        id: `ai-${Date.now()}`,
+        role: "assistant",
+        content: data.result,
+        timestamp: new Date(),
+        model,
+        action
       }
+      setAiMessages(prev => [...prev, aiMessage])
       
     } catch (error) {
       console.error("Error performing AI action:", error)
       alert("Failed to perform AI action")
     } finally {
-      setIsPerformingAction(false)
+      setIsGenerating(false)
     }
   }
 
-  const handleBlockSelect = (block: ComponentBlock) => {
-    // Convert ComponentBlock to Component format for Sidebar
-    const component = {
-      id: block.id,
-      name: block.name,
-      description: block.metadata.complexity,
-      category: "custom",
-      jsx: block.jsx,
-      metadata: block.metadata,
-      isFavorite: false,
-      createdAt: new Date().toISOString()
+  const handleElementSelect = (element: WorkspaceElement) => {
+    // Handle element selection for editing
+    console.log("Selected element:", element)
+  }
+
+  const handleElementDelete = (elementId: string) => {
+    setWorkspaceElements(prev => prev.filter(el => el.id !== elementId))
+  }
+
+  const handleGenerateCode = () => {
+    // Generate code from workspace elements
+    console.log("Generating code from workspace")
+  }
+
+  const handleComponentSelect = (component: Component) => {
+    // Add component to workspace
+    const newElement: WorkspaceElement = {
+      id: `component-${Date.now()}`,
+      type: component.category,
+      name: component.name,
+      props: {},
+      position: { x: 0, y: 0 },
+      size: { width: 200, height: 100 }
     }
-    
-    setCurrentComponent({
-      jsx: block.jsx,
-      metadata: block.metadata,
-    })
+    setWorkspaceElements(prev => [...prev, newElement])
   }
 
-  const handleBlockDelete = (blockId: string) => {
-    setBlocks(blocks.filter(block => block.id !== blockId))
+  const handleSaveComponent = (component: Partial<Component>) => {
+    // Save component to library
+    console.log("Saving component:", component)
   }
 
-  const handleBlockDuplicate = (block: ComponentBlock) => {
-    const newBlock: ComponentBlock = {
-      ...block,
-      id: `block-${Date.now()}`,
-      name: `${block.name} (Copy)`,
-      position: blocks.length,
+  const handleDeleteComponent = (componentId: string) => {
+    // Delete component from library
+    console.log("Deleting component:", componentId)
+  }
+
+  const handleDeploy = () => {
+    // Handle deployment
+    console.log("Deploying project")
+  }
+
+  const handleExportGitHub = () => {
+    // Export to GitHub
+    console.log("Exporting to GitHub")
+  }
+
+  const handleRefreshPreview = () => {
+    // Refresh preview
+    console.log("Refreshing preview")
+  }
+
+  const handleExportPreview = () => {
+    // Export preview
+    console.log("Exporting preview")
+  }
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false)
+  }
+
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false)
+  }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "workspace":
+        return (
+          <DragDropWorkspace
+            onElementSelect={handleElementSelect}
+            onElementDelete={handleElementDelete}
+            onGenerateCode={handleGenerateCode}
+          />
+        )
+      case "library":
+        return (
+          <ComponentLibrary
+            onComponentSelect={handleComponentSelect}
+            onSaveComponent={handleSaveComponent}
+            onDeleteComponent={handleDeleteComponent}
+          />
+        )
+      case "preview":
+        return (
+          <PreviewPanel
+            elements={workspaceElements}
+            onRefresh={handleRefreshPreview}
+            onExport={handleExportPreview}
+          />
+        )
+      case "deploy":
+        return (
+          <DeployPanel
+            onDeploy={handleDeploy}
+            onExportGitHub={handleExportGitHub}
+          />
+        )
+      case "ai-tools":
+        return (
+          <AIToolsPanel
+            onAIAction={handleAIAction}
+            messages={aiMessages}
+            isLoading={isGenerating}
+          />
+        )
+      default:
+        return (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <div className="text-center">
+              <Grid3X3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">Select a Tab</h3>
+              <p className="text-sm">Choose a tab to get started</p>
+            </div>
+          </div>
+        )
     }
-    setBlocks([...blocks, newBlock])
-  }
-
-  const handleBlocksChange = (newBlocks: ComponentBlock[]) => {
-    setBlocks(newBlocks)
-  }
-
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
-    setTheme(newTheme)
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <h1 className="text-xl font-bold">AI UI Builder</h1>
-            <Badge variant="outline" className="text-xs">
-              v1.0
-            </Badge>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Save className="h-4 w-4 mr-2" />
-              Save Project
-            </Button>
-            <Button variant="outline" size="sm">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="container mx-auto p-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="builder" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Builder
-            </TabsTrigger>
-            <TabsTrigger value="workspace" className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              Workspace
-            </TabsTrigger>
-            <TabsTrigger value="themes" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Themes
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="builder" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Sidebar */}
-              <div className="space-y-6">
-                <Sidebar
-                  onComponentSelect={handleBlockSelect}
-                  onNewComponent={() => setActiveTab("builder")}
-                />
-              </div>
-
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Prompt Form */}
-                <PromptForm
-                  onSubmit={handleGenerateUI}
-                  isLoading={isGenerating}
-                />
-
-                {/* AI Action Toolbar */}
-                <AIActionToolbar
-                  onAction={handleAIAction}
-                  currentCode={currentComponent?.jsx || ""}
-                  isLoading={isPerformingAction}
-                />
-
-                {/* Component Preview */}
-                <UIBlockPreview
-                  component={currentComponent}
-                  onRegenerate={() => {
-                    if (currentComponent) {
-                      handleGenerateUI(currentComponent.metadata.description, "v0")
-                    }
-                  }}
-                  onSave={(component) => {
-                    if (component) {
-                      const newBlock: ComponentBlock = {
-                        id: `block-${Date.now()}`,
-                        name: component.metadata?.name || "Saved Component",
-                        jsx: component.jsx,
-                        metadata: component.metadata,
-                        position: blocks.length,
-                      }
-                      setBlocks([...blocks, newBlock])
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="workspace" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Workspace Sidebar */}
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <History className="h-5 w-5" />
-                      Recent
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {blocks.slice(-5).reverse().map((block) => (
-                        <div
-                          key={block.id}
-                          className="p-2 border rounded cursor-pointer hover:bg-muted"
-                          onClick={() => handleBlockSelect(block)}
-                        >
-                          <div className="font-medium text-sm">{block.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {block.metadata.framework} • {block.metadata.complexity}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Workspace Main */}
-              <div className="lg:col-span-3">
-                <EditorWorkspace
-                  blocks={blocks}
-                  onBlocksChange={handleBlocksChange}
-                  onBlockSelect={handleBlockSelect}
-                  onBlockDelete={handleBlockDelete}
-                  onBlockDuplicate={handleBlockDuplicate}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="themes" className="space-y-6">
-            <div className="max-w-2xl mx-auto">
-              <ThemeSwitcher onThemeChange={handleThemeChange} />
-              
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    Theme Preview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-lg bg-white">
-                      <h4 className="font-medium mb-2">Light Theme</h4>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                    <div className="p-4 border rounded-lg bg-gray-900 text-white">
-                      <h4 className="font-medium mb-2">Dark Theme</h4>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-700 rounded"></div>
-                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <div className="max-w-2xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">AI Model Preferences</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Configure your preferred AI models for different tasks
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium mb-2">Export Settings</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Choose your preferred export format and settings
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium mb-2">Keyboard Shortcuts</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Customize keyboard shortcuts for faster workflow
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+    <div className="h-screen bg-background">
+      {showOnboarding && (
+        <OnboardingBanner
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
+      
+      <BuilderLayout>
+        {renderTabContent()}
+      </BuilderLayout>
     </div>
   )
 }
