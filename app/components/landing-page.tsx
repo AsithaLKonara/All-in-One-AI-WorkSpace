@@ -20,6 +20,7 @@ import {
   BarChart3
 } from "lucide-react"
 import { OnboardingWizard } from "./onboarding-wizard"
+import { ThemeSwitcher } from "./theme-switcher"
 
 interface Feature {
   title: string
@@ -134,18 +135,19 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
+      <header className="border-b bg-background/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/60 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">AI Workspace</span>
             </div>
             <div className="flex items-center space-x-4">
+              <ThemeSwitcher variant="icon" size="sm" />
               <Button variant="ghost">Sign In</Button>
-              <Button>Get Started</Button>
+              <Button className="btn-primary">Get Started</Button>
             </div>
           </div>
         </div>
@@ -158,15 +160,15 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
             <Badge variant="secondary" className="mb-4">
               🚀 The Ultimate AI Development Platform
             </Badge>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6">
               Build the Future with
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> AI</span>
+              <span className="gradient-text"> AI</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
               The all-in-one platform for AI-powered development. Chat, code, research, and build with the world's most advanced AI models.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => setShowOnboarding(true)}>
+              <Button size="lg" onClick={() => setShowOnboarding(true)} className="btn-primary">
                 <Zap className="w-5 h-5 mr-2" />
                 Start Building
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -180,7 +182,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-16">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">15+</div>
+              <div className="text-3xl font-bold text-primary">15+</div>
               <div className="text-muted-foreground">AI Models</div>
             </div>
             <div className="text-center">
@@ -200,7 +202,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-card">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Everything You Need to Build with AI</h2>
@@ -211,7 +213,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all cursor-pointer">
+              <Card key={index} className="card-enhanced hover:shadow-lg transition-all cursor-pointer">
                 <CardHeader>
                   <div className={`w-12 h-12 ${feature.color} rounded-lg flex items-center justify-center mb-4`}>
                     {feature.icon}
@@ -237,8 +239,8 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-blue-600">1</span>
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-primary">1</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">Choose Your Goal</h3>
               <p className="text-muted-foreground">
@@ -246,7 +248,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">2</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">Select AI Models</h3>
@@ -255,7 +257,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-purple-600">3</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">Start Building</h3>
@@ -268,7 +270,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-card">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
@@ -279,10 +281,12 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-blue-500' : ''}`}>
+              <Card key={index} className={`card-enhanced relative ${plan.popular ? 'ring-2 ring-primary scale-105' : ''}`}>
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-blue-500">Most Popular</Badge>
+                    <Badge className="bg-primary">
+                      Most Popular
+                    </Badge>
                   </div>
                 )}
                 <CardHeader>
@@ -319,7 +323,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
           <p className="text-xl text-muted-foreground mb-8">
             Join thousands of developers already building with AI Workspace
           </p>
-          <Button size="lg" onClick={() => setShowOnboarding(true)}>
+          <Button size="lg" onClick={() => setShowOnboarding(true)} className="btn-primary">
             <Zap className="w-5 h-5 mr-2" />
             Start Your Free Trial
             <ArrowRight className="w-5 h-5 ml-2" />
@@ -328,13 +332,13 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-white">
+      <footer className="border-t bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/60 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <span className="text-xl font-bold">AI Workspace</span>
               </div>
