@@ -83,9 +83,7 @@ export function WorkspaceHeader({
           </div>
         )}
 
-        <Button variant="ghost" size="icon" onClick={() => onThemeChange?.(theme === "dark" ? "light" : "dark")}>
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        <ThemeSwitcher variant="icon" size="sm" />
 
         {user ? (
           <DropdownMenu>

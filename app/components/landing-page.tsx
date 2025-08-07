@@ -132,7 +132,7 @@ export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: ()
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
