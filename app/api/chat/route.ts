@@ -1,116 +1,161 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { localAI } from "@/lib/local-ai-processor"
-import { CreditManager } from "@/lib/credits"
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/app/lib/auth"
+import { prisma } from "@/app/lib/prisma"
+import { aiService, ChatMessage } from "@/app/lib/ai-service"
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, model = "v0", context } = await request.json()
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-    if (!messages || messages.length === 0) {
+    const body = await request.json()
+    const {
+      messages,
+      modelId,
+      conversationId,
+      agentId,
+      workspaceId,
+      options = {}
+    } = body
+
+    // Validate required fields
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "Messages are required" }, { status: 400 })
     }
 
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    if (!modelId || !aiService.isModelAvailable(modelId)) {
+      return NextResponse.json({ error: "Invalid model ID" }, { status: 400 })
+    }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
 
     if (!user) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const lastMessage = messages[messages.length - 1]
-    const userPrompt = lastMessage.content
-    const estimatedTokens = userPrompt.length * 1.3
+    // Process messages
+    const chatMessages: ChatMessage[] = messages.map((msg: any) => ({
+      role: msg.role,
+      content: msg.content,
+      timestamp: new Date()
+    }))
 
-    const creditCheck = await CreditManager.deductCredits(user.id, model, estimatedTokens)
+    // Get AI response
+    const response = await aiService.chat(modelId, chatMessages, options)
 
-    if (!creditCheck.success) {
-      return NextResponse.json(
-        {
-          error: creditCheck.error,
-          remainingCredits: creditCheck.remainingCredits,
-          needsCredits: true,
-        },
-        { status: 402 },
-      )
-    }
-
-    const response = await localAI.processRequest(model, userPrompt, {
-      ...context,
-      conversation: messages.slice(0, -1),
-      user: { id: user.id, email: user.email },
-    })
-
-    const assistantMessage = {
-      id: Date.now().toString(),
-      role: "assistant",
-      content: response,
-      timestamp: new Date().toISOString(),
-      model,
-    }
-
-    try {
-      await supabase.from("chat_sessions").upsert({
-        user_id: user.id,
-        title: userPrompt.slice(0, 50) + (userPrompt.length > 50 ? "..." : ""),
-        model,
-        messages: [...messages, assistantMessage],
+    // Save conversation to database
+    let conversation
+    if (conversationId) {
+      // Update existing conversation
+      conversation = await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          messages: [...messages, { role: "assistant", content: response.content }],
+          updatedAt: new Date()
+        }
       })
-    } catch (error) {
-      console.warn("Failed to save chat session:", error)
+    } else {
+      // Create new conversation
+      conversation = await prisma.conversation.create({
+        data: {
+          title: messages[0]?.content?.slice(0, 50) + "...",
+          messages: [...messages, { role: "assistant", content: response.content }],
+          userId: user.id,
+          workspaceId: workspaceId || null,
+          agentId: agentId || null
+        }
+      })
     }
+
+    // Track analytics
+    await prisma.userAnalytics.create({
+      data: {
+        userId: user.id,
+        eventType: "chat_message",
+        metadata: {
+          modelId,
+          conversationId: conversation.id,
+          agentId,
+          workspaceId,
+          messageCount: messages.length,
+          responseLength: response.content.length,
+          cost: response.cost,
+          usage: response.usage
+        }
+      }
+    })
 
     return NextResponse.json({
-      message: assistantMessage,
-      model,
-      remainingCredits: creditCheck.remainingCredits,
-      usage: {
-        prompt_tokens: Math.ceil(userPrompt.length / 4),
-        completion_tokens: Math.ceil(response.length / 4),
-        total_tokens: Math.ceil((userPrompt.length + response.length) / 4),
-      },
+      content: response.content,
+      model: response.model,
+      conversationId: conversation.id,
+      usage: response.usage,
+      cost: response.cost
     })
+
   } catch (error) {
     console.error("Chat API error:", error)
-    return NextResponse.json({ error: "Failed to process chat request" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: sessions, error } = await supabase
-      .from("chat_sessions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(50)
+    const { searchParams } = new URL(request.url)
+    const conversationId = searchParams.get("conversationId")
 
-    if (error) {
-      throw error
+    if (!conversationId) {
+      return NextResponse.json({ error: "Conversation ID required" }, { status: 400 })
     }
 
-    return NextResponse.json({
-      sessions: sessions || [],
-      total: sessions?.length || 0,
+    // Get conversation
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true }
+        },
+        workspace: {
+          select: { id: true, name: true }
+        },
+        agent: {
+          select: { id: true, name: true, description: true }
+        }
+      }
     })
+
+    if (!conversation) {
+      return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
+    }
+
+    // Check if user owns this conversation
+    if (conversation.user.email !== session.user.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    return NextResponse.json(conversation)
+
   } catch (error) {
-    console.error("Chat sessions API error:", error)
-    return NextResponse.json({ error: "Failed to fetch chat sessions" }, { status: 500 })
+    console.error("Get conversation error:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
