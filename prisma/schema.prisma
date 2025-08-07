@@ -6,10 +6,232 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // User preferences
+  theme         String    @default("system") // light, dark, system
+  onboardingCompleted Boolean @default(false)
+  lastActive    DateTime?
+
+  // Relationships
+  accounts      Account[]
+  sessions      Session[]
+  workspaces    Workspace[]
+  agents        Agent[]
+  subscriptions Subscription[]
+  analytics     UserAnalytics[]
+  prompts       Prompt[]
+  conversations Conversation[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   @default("general") // general, coding, research, creative
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agents      Agent[]
+  conversations Conversation[]
+
+  @@map("workspaces")
+}
+
+model Agent {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  systemPrompt  String   @db.Text
+  model         String   // AI model identifier
+  tools         String[] // Array of tool IDs
+  avatar        String?
+  category      String   @default("general")
+  isPublic      Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  usageCount    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId   String?
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  conversations Conversation[]
+
+  @@map("agents")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  title     String?
+  messages  Json[]   // Array of message objects
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  agentId   String?
+  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@map("conversations")
+}
+
+model Prompt {
+  id          String   @id @default(cuid())
+  name        String
+  content     String   @db.Text
+  category    String   @default("general")
+  tags        String[]
+  isPublic    Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("prompts")
+}
+
+model Subscription {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  stripeCustomerId   String?   @unique
+  stripeSubscriptionId String?  @unique
+  plan               String    // free, pro, team, enterprise
+  status             String    // active, canceled, past_due, etc.
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relationships
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model UserAnalytics {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @default(now())
+  eventType String   // login, workspace_created, agent_used, etc.
+  metadata  Json?    // Additional event data
+  createdAt DateTime @default(now())
+
+  // Relationships
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_analytics")
+}
+
+model SystemSettings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string") // string, number, boolean, json
+
+  @@map("system_settings")
+}
+
+// Indexes for better performance
+model Account {
+  @@index([userId])
+}
+
+model Session {
+  @@index([userId])
+}
+
+model Workspace {
+  @@index([userId])
+  @@index([isPublic])
+}
+
+model Agent {
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([isPublic])
+  @@index([category])
+}
+
+model Conversation {
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([agentId])
+  @@index([createdAt])
+}
+
+model Prompt {
+  @@index([userId])
+  @@index([category])
+  @@index([isPublic])
+}
+
+model UserAnalytics {
+  @@index([userId])
+  @@index([date])
+  @@index([eventType])
 }
