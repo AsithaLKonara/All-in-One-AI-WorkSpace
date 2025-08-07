@@ -10,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Settings, User, LogOut, Moon, Sun, FileText, Download, Code, MessageSquare } from "lucide-react"
+import { Settings, User, LogOut, FileText, Download, Code, MessageSquare } from "lucide-react"
+import { ThemeSwitcher } from "./theme-switcher"
 
 interface WorkspaceHeaderProps {
   user: any
