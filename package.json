@@ -14,7 +14,9 @@
     "setup-repos": "git remote add origin https://github.com/AsithaLKonara/All-in-One-AI-WorkSpace.git && git remote add backup https://github.com/AsithaLKonara/systempromptsandmodelsofaitools.git"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.10.0",
     "@hookform/resolvers": "^3.9.1",
+    "@prisma/client": "^6.13.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
@@ -51,6 +53,7 @@
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
+    "next-auth": "^4.24.11",
     "next-themes": "latest",
     "react": "^19",
     "react-day-picker": "latest",
