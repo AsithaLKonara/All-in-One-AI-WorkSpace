@@ -278,10 +278,7 @@ export default function AsviaWorkspace() {
   if (activeView === "landing") {
     return (
       <LandingPage
-        onGetStarted={() => setActiveView("workspace")}
-        onLogin={() => setShowAuthModal(true)}
-        theme={theme}
-        onThemeChange={setTheme}
+        onWorkspaceReady={() => setActiveView("workspace")}
       />
     )
   }
