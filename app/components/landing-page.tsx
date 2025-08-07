@@ -4,511 +4,377 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Code, MessageSquare, Zap, Shield, Globe, Star, Github, Moon, Sun } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  MessageSquare, 
+  Code, 
+  Search, 
+  Hammer, 
+  Sparkles, 
+  Zap,
+  ArrowRight,
+  CheckCircle,
+  Users,
+  Shield,
+  Globe,
+  BarChart3
+} from "lucide-react"
+import { OnboardingWizard } from "./onboarding-wizard"
 
-interface LandingPageProps {
-  onGetStarted: () => void
-  onLogin: () => void
-  theme?: string
-  onThemeChange?: (theme: string) => void
+interface Feature {
+  title: string
+  description: string
+  icon: React.ReactNode
+  color: string
 }
 
-const LandingPage = ({ onGetStarted, onLogin, theme, onThemeChange }: LandingPageProps) => {
-  const [activeFeature, setActiveFeature] = useState(0)
+interface PricingPlan {
+  name: string
+  price: string
+  description: string
+  features: string[]
+  popular?: boolean
+}
 
-  const features = [
+export default function LandingPage({ onWorkspaceReady }: { onWorkspaceReady: () => void }) {
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingData, setOnboardingData] = useState<any>(null)
+
+  const features: Feature[] = [
     {
-      icon: <Code className="h-6 w-6" />,
-      title: "Multi-Model AI Integration",
-      description: "Access v0, Cursor, Bolt, Lovable, Devin AI, Claude, and more in one unified workspace",
-      color: "bg-blue-500",
+      title: "Multi-Model AI Chat",
+      description: "Chat with Claude, GPT-4, Gemini, and more in one interface",
+      icon: <MessageSquare className="w-6 h-6" />,
+      color: "bg-blue-500"
     },
     {
-      icon: <MessageSquare className="h-6 w-6" />,
-      title: "Dual Workspace Design",
-      description: "Switch between coding environments and chat interfaces seamlessly",
-      color: "bg-green-500",
+      title: "Code Development",
+      description: "Write, debug, and deploy code with AI assistance",
+      icon: <Code className="w-6 h-6" />,
+      color: "bg-green-500"
     },
     {
-      icon: <Zap className="h-6 w-6" />,
-      title: "Zero-Cost Architecture",
-      description: "Built with free-tier services and open-source AI models for maximum accessibility",
-      color: "bg-yellow-500",
+      title: "Research & Analysis",
+      description: "Research topics and analyze data with powerful AI tools",
+      icon: <Search className="w-6 h-6" />,
+      color: "bg-purple-500"
     },
     {
-      icon: <Shield className="h-6 w-6" />,
-      title: "Privacy-First Design",
-      description: "Local AI processing options and secure data handling for sensitive projects",
-      color: "bg-purple-500",
+      title: "Build Applications",
+      description: "Create full applications and prototypes with AI guidance",
+      icon: <Hammer className="w-6 h-6" />,
+      color: "bg-orange-500"
     },
     {
-      icon: <Globe className="h-6 w-6" />,
-      title: "GitHub-Style Interface",
-      description: "Familiar, professional design with smooth animations and responsive layout",
-      color: "bg-indigo-500",
+      title: "Prompt Management",
+      description: "Organize, version, and share your AI prompts",
+      icon: <Sparkles className="w-6 h-6" />,
+      color: "bg-pink-500"
     },
+    {
+      title: "Team Collaboration",
+      description: "Work together with shared workspaces and real-time sync",
+      icon: <Users className="w-6 h-6" />,
+      color: "bg-indigo-500"
+    }
   ]
 
-  const aiModels = [
-    { name: "v0 by Vercel", description: "React/Next.js specialist", color: "bg-black", icon: "⚛️" },
-    { name: "Cursor Agent", description: "Code editing & refactoring", color: "bg-blue-600", icon: "📝" },
-    { name: "Bolt", description: "Full-stack development", color: "bg-orange-500", icon: "🔧" },
-    { name: "Lovable", description: "Web app design", color: "bg-pink-500", icon: "🎨" },
-    { name: "Devin AI", description: "Autonomous engineering", color: "bg-purple-600", icon: "🤖" },
-    { name: "Claude", description: "General AI assistance", color: "bg-amber-600", icon: "🧠" },
-    { name: "LLaMA Local", description: "Privacy-focused local AI", color: "bg-green-600", icon: "🏠" },
-    { name: "GPT-4 Free", description: "Community-driven access", color: "bg-emerald-500", icon: "🆓" },
+  const pricingPlans: PricingPlan[] = [
+    {
+      name: "Free",
+      price: "$0",
+      description: "Perfect for getting started",
+      features: [
+        "1 workspace",
+        "2 AI agents",
+        "Basic chat features",
+        "Community support"
+      ]
+    },
+    {
+      name: "Pro",
+      price: "$15",
+      description: "For power users and developers",
+      features: [
+        "Unlimited workspaces",
+        "Unlimited AI agents",
+        "Export capabilities",
+        "Prompt versioning",
+        "Priority support",
+        "Advanced analytics"
+      ],
+      popular: true
+    },
+    {
+      name: "Team",
+      price: "$49",
+      description: "For teams and collaboration",
+      features: [
+        "Everything in Pro",
+        "Team collaboration",
+        "Shared agent pool",
+        "Usage analytics",
+        "Admin controls",
+        "API access"
+      ]
+    }
   ]
 
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "Full-Stack Developer",
-      content: "Asvia has revolutionized my workflow. Having all AI models in one place saves me hours every day.",
-      avatar: "SC",
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "UI/UX Designer",
-      content: "The seamless switch between coding and chat workspaces is exactly what I needed for my design process.",
-      avatar: "MR",
-    },
-    {
-      name: "Emily Johnson",
-      role: "Startup Founder",
-      content: "Zero-cost deployment with enterprise-level features. Asvia is perfect for bootstrapped startups.",
-      avatar: "EJ",
-    },
-  ]
+  const handleOnboardingComplete = (data: any) => {
+    setOnboardingData(data)
+    setShowOnboarding(false)
+    // Here you would typically save the onboarding data and redirect to workspace
+    onWorkspaceReady()
+  }
+
+  if (showOnboarding) {
+    return <OnboardingWizard onComplete={handleOnboardingComplete} />
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">A</span>
+      <header className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold">AI Workspace</span>
             </div>
-            <span className="text-xl font-bold">Asvia</span>
-            <Badge variant="secondary" className="ml-2">
-              Beta
-            </Badge>
-          </div>
-
-          <nav className="hidden md:flex items-center space-x-6">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-              Features
-            </a>
-            <a href="#models" className="text-muted-foreground hover:text-foreground transition-colors">
-              AI Models
-            </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
-            </a>
-            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
-              About
-            </a>
-          </nav>
-
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={() => onThemeChange?.(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            <Button variant="ghost" onClick={onLogin}>
-              Sign In
-            </Button>
-            <Button onClick={onGetStarted} className="btn-github">
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost">Sign In</Button>
+              <Button>Get Started</Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="py-20 px-4">
-        <div className="container mx-auto text-center max-w-4xl">
-          <div className="mb-6">
-            <Badge variant="outline" className="mb-4">
-              🚀 Now in Public Beta
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="mb-8">
+            <Badge variant="secondary" className="mb-4">
+              🚀 The Ultimate AI Development Platform
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Your Unified AI Workspace
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              Build the Future with
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> AI</span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Zero-cost, open-source AI multiplex workplace. Access multiple AI models, coding environments, and chat
-              interfaces in one seamless platform.
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+              The all-in-one platform for AI-powered development. Chat, code, research, and build with the world's most advanced AI models.
             </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={() => setShowOnboarding(true)}>
+                <Zap className="w-5 h-5 mr-2" />
+                Start Building
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button variant="outline" size="lg">
+                Watch Demo
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" onClick={onGetStarted} className="btn-github">
-              Start Building Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="btn-github bg-transparent">
-              <Github className="mr-2 h-5 w-5" />
-              View on GitHub
-            </Button>
-          </div>
-
-          {/* Hero Image/Demo */}
-          <div className="relative mx-auto max-w-5xl">
-            <div className="rounded-lg border border-border bg-card p-2 shadow-2xl">
-              <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Code className="h-8 w-8 text-primary" />
-                  </div>
-                  <p className="text-muted-foreground">Interactive Demo Coming Soon</p>
-                </div>
-              </div>
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-16">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">15+</div>
+              <div className="text-muted-foreground">AI Models</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">1000+</div>
+              <div className="text-muted-foreground">Active Users</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600">50K+</div>
+              <div className="text-muted-foreground">Prompts Created</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-600">99.9%</div>
+              <div className="text-muted-foreground">Uptime</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
+            <h2 className="text-4xl font-bold mb-4">Everything You Need to Build with AI</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Everything you need for modern AI-powered development in one unified platform
+              From simple chat to complex applications, AI Workspace provides all the tools you need.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card
-                key={index}
-                className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                  activeFeature === index ? "ring-2 ring-primary" : ""
-                }`}
-                onClick={() => setActiveFeature(index)}
-              >
+              <Card key={index} className="hover:shadow-lg transition-all cursor-pointer">
                 <CardHeader>
                   <div className={`w-12 h-12 ${feature.color} rounded-lg flex items-center justify-center mb-4`}>
-                    <div className="text-white">{feature.icon}</div>
+                    {feature.icon}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle>{feature.title}</CardTitle>
+                  <CardDescription>{feature.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
-                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* AI Models Section */}
-      <section id="models" className="py-20 px-4">
-        <div className="container mx-auto">
+      {/* How It Works */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Integrated AI Models</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Access the best AI models from leading providers, all in one unified interface
+            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
+            <p className="text-xl text-muted-foreground">
+              Get started in minutes with our simple 3-step process
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {aiModels.map((model, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all duration-300 btn-github">
-                <CardHeader className="text-center">
-                  <div
-                    className={`w-16 h-16 ${model.color} rounded-full flex items-center justify-center mx-auto mb-4`}
-                  >
-                    <span className="text-2xl">{model.icon}</span>
-                  </div>
-                  <CardTitle className="text-lg">{model.name}</CardTitle>
-                  <CardDescription>{model.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">What Developers Say</h2>
-            <p className="text-xl text-muted-foreground">Join thousands of developers already using Asvia</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all duration-300">
-                <CardContent className="pt-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
-                      <span className="text-primary-foreground font-semibold text-sm">{testimonial.avatar}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground italic">"{testimonial.content}"</p>
-                  <div className="flex mt-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-blue-600">1</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Choose Your Goal</h3>
+              <p className="text-muted-foreground">
+                Select what you want to build: chat, code, research, or applications
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-green-600">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Select AI Models</h3>
+              <p className="text-muted-foreground">
+                Choose from 15+ AI models including Claude, GPT-4, Gemini, and more
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-purple-600">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Start Building</h3>
+              <p className="text-muted-foreground">
+                Begin creating with your personalized AI workspace
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-4">
-        <div className="container mx-auto">
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-muted-foreground">Start free, scale as you grow</p>
+            <h2 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-xl text-muted-foreground">
+              Choose the plan that fits your needs. Upgrade or downgrade anytime.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Free</CardTitle>
-                <div className="text-4xl font-bold mt-4">$0</div>
-                <CardDescription>Perfect for getting started</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Access to 3 AI models
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Basic coding workspace
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Community support
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Local AI processing
-                  </li>
-                </ul>
-                <Button className="w-full mt-6 btn-github bg-transparent" variant="outline" onClick={onGetStarted}>
-                  Get Started Free
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300 ring-2 ring-primary relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-              </div>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Pro</CardTitle>
-                <div className="text-4xl font-bold mt-4">$19</div>
-                <CardDescription>For professional developers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    All AI models included
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Advanced coding features
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Priority support
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Custom prompts & roles
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Team collaboration
-                  </li>
-                </ul>
-                <Button className="w-full mt-6 btn-github" onClick={onGetStarted}>
-                  Start Pro Trial
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Enterprise</CardTitle>
-                <div className="text-4xl font-bold mt-4">Custom</div>
-                <CardDescription>For teams and organizations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Everything in Pro
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Custom AI model training
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Advanced security
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    Dedicated support
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    On-premise deployment
-                  </li>
-                </ul>
-                <Button className="w-full mt-6 btn-github bg-transparent" variant="outline">
-                  Contact Sales
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {pricingPlans.map((plan, index) => (
+              <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-blue-500' : ''}`}>
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-blue-500">Most Popular</Badge>
+                  </div>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    {plan.price !== "$0" && <span className="text-muted-foreground ml-1">/month</span>}
+                  </div>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full mt-6" variant={plan.popular ? "default" : "outline"}>
+                    {plan.price === "$0" ? "Get Started" : "Choose Plan"}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-primary text-primary-foreground">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Workflow?</h2>
-          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Join thousands of developers who are already building faster with Asvia's unified AI workspace.
+      <section className="py-20 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-4">Ready to Build the Future?</h2>
+          <p className="text-xl text-muted-foreground mb-8">
+            Join thousands of developers already building with AI Workspace
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" onClick={onGetStarted} className="btn-github">
-              Start Building Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="btn-github border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary bg-transparent"
-            >
-              Schedule Demo
-            </Button>
-          </div>
+          <Button size="lg" onClick={() => setShowOnboarding(true)}>
+            <Zap className="w-5 h-5 mr-2" />
+            Start Your Free Trial
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 border-t border-border">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
+      <footer className="border-t bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">A</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold">Asvia</span>
+                <span className="text-xl font-bold">AI Workspace</span>
               </div>
-              <p className="text-muted-foreground mb-4">Your unified AI workspace for modern development.</p>
-              <div className="flex space-x-4">
-                <Button variant="ghost" size="icon">
-                  <Github className="h-4 w-4" />
-                </Button>
-              </div>
+              <p className="text-muted-foreground">
+                The ultimate platform for AI-powered development.
+              </p>
             </div>
-
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <a href="#features" className="hover:text-foreground transition-colors">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#models" className="hover:text-foreground transition-colors">
-                    AI Models
-                  </a>
-                </li>
-                <li>
-                  <a href="#pricing" className="hover:text-foreground transition-colors">
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Changelog
-                  </a>
-                </li>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Features</li>
+                <li>Pricing</li>
+                <li>API</li>
+                <li>Documentation</li>
               </ul>
             </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    API Reference
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Tutorials
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Community
-                  </a>
-                </li>
-              </ul>
-            </div>
-
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <a href="#about" className="hover:text-foreground transition-colors">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Contact
-                  </a>
-                </li>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>About</li>
+                <li>Blog</li>
+                <li>Careers</li>
+                <li>Contact</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Help Center</li>
+                <li>Community</li>
+                <li>Status</li>
+                <li>Security</li>
               </ul>
             </div>
           </div>
-
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 Asvia. All rights reserved. Built with ❤️ for developers.</p>
+          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+            © 2024 AI Workspace. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
   )
 }
-
-export default LandingPage
